@@ -1,0 +1,8 @@
+aws/
+node_modules/
+.keys.txt
+.env
+package-lock.json
+package.json
+backup/
+db_restore.sh
