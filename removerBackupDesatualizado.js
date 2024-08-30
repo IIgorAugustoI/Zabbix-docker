@@ -1,7 +1,7 @@
 const fs = require("fs");
 const moment = require("moment");
 
-const dir = "./backup/";
+const dir = "./backups/";
 var backups = [];
 var arquivosAhSeremDeletados = [];
 

@@ -1,21 +1,32 @@
 #!/bin/sh
 STATUS_DOCKER=`docker ps -q`
-# BOOLEAN PARA SABER EXITE CONTAINERS ATIVOS 
+# BOOLEAN PARA SABER EXITE CONTAINERS ATIVOS
 CONTAINERS_ATIVOS=`echo ${#STATUS_DOCKER}`
-DIR="./backup/"
+DIR=./backups/
 DATA=`date +%d-%m-%Y_%H-%M-%S`
 NOME_BACKUP_SQL='pgdump_'$DATA'.sql'
+BUCKET_AWS='Your bucket s3'
+BACKUP_COMPACTADO_SQL='backup_pgsql_'$DATA'.tar.gz'
 
-if [ $CONTAINERS_ATIVOS != 0 ]; then
-   docker compose down 
-fi
+enviaArquivo(){
+   cd $DIR
+   ARQUIVO_SQL=`find *.sql`
+   if [ -e $ARQUIVO_SQL ]; then
+       tar -zcvf $BACKUP_COMPACTADO_SQL $ARQUIVO_SQL
+       aws s3 cp $BACKUP_COMPACTADO_SQL $BUCKET_AWS
+   else
+      echo "Arquivo não encontrado"
+   fi
+   rm -rf $ARQUIVO_SQL
+}
 
-docker compose up -d
-docker compose exec zabbix-docker-postgres-1 postgres pg_dumpall -U zabbixadmin > $DIR$NOME_BACKUP_SQL
-docker compose down
+efetuaBackup (){
+   if [ $CONTAINERS_ATIVOS != 0 ]; then
+      docker compose down
+   fi
+   docker compose up -d
+   docker compose exec postgres pg_dump --host=localhost --username=/run/secrets/PGSQL_USER --no-password /run/secrets/PGSQL_DB -w > $DIR$NOME_BACKUP_SQL
+   enviaArquivo
+}
 
-if [ -e "$DIR$NOME_BACKUP_SQL" ]; then
-   aws s3 cp $DIR$NOME_BACKUP_SQL $BUCKET_AWS
-else
-   echo "Arquivo não encontrado"
-fi
+efetuaBackup

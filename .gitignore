@@ -1,8 +1,9 @@
 aws/
 node_modules/
-.keys.txt
+keys/
 .env
 package-lock.json
 package.json
-backup/
+backups/
 db_restore.sh
+upload_backup_cloud.sh
