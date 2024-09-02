@@ -1,0 +1,142 @@
+services:
+  zabbix-server:
+    image: zabbix/zabbix-server-pgsql:ubuntu-trunk
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "10051:10051"
+    environment:
+      DB_SERVER_HOST: postgres
+      DB_SERVER_PORT: 5432
+      POSTGRES_USER_FILE: /run/secrets/pgsql_user_db
+      POSTGRES_PASSWORD_FILE: /run/secrets/pgsql_passwd_db
+      POSTGRES_DB_FILE: /run/secrets/pgsql_name_db
+      TZ: America/Sao_Paulo
+    depends_on:
+      - postgres
+    volumes:
+      - ./externalscripts:/usr/lib/zabbix/externalscripts
+    networks:
+      - zabbix
+    secrets:
+      - pgsql_user_db
+      - pgsql_passwd_db
+      - pgsql_name_db
+
+  zabbix-frontend:
+    image: zabbix/zabbix-web-nginx-pgsql:ubuntu-trunk
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    environment:
+      DB_SERVER_HOST: postgres
+      POSTGRES_USER_FILE: /run/secrets/pgsql_user_db
+      POSTGRES_PASSWORD_FILE: /run/secrets/pgsql_passwd_db
+      POSTGRES_DB_FILE: /run/secrets/pgsql_name_db
+      PHP_TZ: America/Sao_Paulo
+      TZ: America/Sao_Paulo
+      ZBX_SERVER_HOST: zabbix-server
+      ZBX_SERVER_PORT: 10051
+    depends_on:
+      - zabbix-server
+    networks:
+      - zabbix
+    secrets:
+      - pgsql_user_db
+      - pgsql_passwd_db
+      - pgsql_name_db
+
+  zabbix-agent:
+    image: zabbix/zabbix-agent2:ubuntu-trunk
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "10050:10050"
+    environment:
+      TZ: America/Sao_Paulo
+      ZBX_SERVER_HOST: zabbix-server
+      ZBX_SERVER_PORT: 10051
+      ZBX_HOSTNAME: zabbix-agent
+      ZBX_HOSTNAMEITEM: system.hostname
+    depends_on:
+      - zabbix-server
+    networks:
+      - zabbix
+
+  postgres:
+    image: postgres:16.2
+    deploy:
+      replicas: 1
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER_FILE: /run/secrets/pgsql_user_db
+      POSTGRES_PASSWORD_FILE: /run/secrets/pgsql_passwd_db
+      POSTGRES_DB_FILE: /run/secrets/pgsql_name_db
+      PG_DATA: /var/lib/postgresql/data/pgdata
+      PGPASSFILE: 127.0.0.1:5432:/run/secrets/pgsql_name_db:/run/secrets/pgsql_user_db:/run/secrets/pgsql_passwd_db
+    networks:
+      - zabbix
+    secrets:
+      - pgsql_user_db
+      - pgsql_passwd_db
+      - pgsql_name_db
+
+  grafana:
+    image: grafana/grafana:10.3.5-ubuntu
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER__FILE: /run/secrets/gf_user
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/gf_passwd
+      GF_INSTALL_PLUGINS: alexanderzobnin-zabbix-app
+      TZ: America/Sao_Paulo
+    user: "472"
+    volumes:
+      - grafana:/var/lib/grafana
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - zabbix-frontend
+    networks:
+      - zabbix
+    secrets:
+      - gf_user
+      - gf_passwd
+
+secrets:
+  pgsql_name_db:
+    file: ./.keys/pgsql_name_db.txt
+  pgsql_passwd_db:
+    file: ./.keys/pgsql_passwd_db.txt
+  pgsql_user_db:
+    file: ./.keys/pgsql_user_db.txt
+  gf_user:
+    file: ./.keys/gf_user.txt
+  gf_passwd:
+    file: ./.keys/gf_passwd.txt
+
+volumes:
+  postgres:
+    name: zabbix-docker_postgres
+    external: true
+  grafana:
+    name: zabbix-docker_grafana
+    external: true
+
+networks:
+  zabbix:
