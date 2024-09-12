@@ -14,10 +14,10 @@ fs.readdir(dir, (err, arquivos) => {
 });
 
 function comparaData(datas) {
-  const dataAtual = moment().format("DD-MM-YYYY");
+  const dataAtual = moment().format("YYYY-MM-DD");
   var datasFormatadas = [];
   datas.forEach((data) => {
-    var regex = /(\d{2}-\d{2}-\d{4})/;
+    var regex = /(\d{4}-\d{2}-\d{2})/;
     datasFormatadas.push(regex.exec(data));
   });
 
@@ -30,6 +30,7 @@ function comparaData(datas) {
 }
 
 function removeArquivosDesatualizados(arquivos) {
+  if (arquivos.length == 0) return console.log("Nada a ser excluído!");
   arquivos.forEach((arquivo) => {
     fs.unlink(dir + arquivo, (err) => {
       if (err) throw err;
