@@ -3,7 +3,7 @@
 # SCRIPT BACKUP TO docker stack
 
 DIR="./backups/"
-DATA=`date +%d-%m-%Y_%H-%M-%S`
+DATA=`date +%Y-%m-%d_%H-%M-%S`
 # GET CONTAINERS NAME 
 CONTAINERS_ATIVOS=`docker ps --format "{{.Names}}"`
 CONTAINER_POSTGRES=""
