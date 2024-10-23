@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# SCRIPT BACKUP TO docker stack
+# SCRIPT BACKUP - docker stack
 
 DIR="./backups/"
 DATA=`date +%Y-%m-%d_%H-%M-%S`
