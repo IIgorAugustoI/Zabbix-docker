@@ -1,10 +1,5 @@
-aws/
 node_modules/
-*.txt
 .env
-externalscripts/*.sh
 package-lock.json
 package.json
 backups/*
-db_restore.sh
-upload_backup_cloud.sh
