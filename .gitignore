@@ -1,9 +1,10 @@
 aws/
 node_modules/
-keys/
+*.txt
 .env
+externalscripts/*.sh
 package-lock.json
 package.json
-backups/
+backups/*
 db_restore.sh
 upload_backup_cloud.sh
